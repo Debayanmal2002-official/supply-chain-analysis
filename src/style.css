@@ -1,0 +1,48 @@
+/* App Background Adjustments */
+.stApp {
+    background-color: #0F172A;
+    color: #F8FAFC;
+}
+
+/* Sidebar Theme Adjustment */
+section[data-testid="stSidebar"] {
+    background-color: #1E293B;
+}
+section[data-testid="stSidebar"] .stMarkdown,
+section[data-testid="stSidebar"] label {
+    color: #F8FAFC !important;
+}
+
+/* Dynamic Hero Section */
+.hero-section {
+    background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)),
+                      url('https://plus.unsplash.com/premium_photo-1764688200995-c408d6a0e149?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+    background-size: cover;
+    background-position: center 80%;
+    background-repeat: no-repeat;
+    padding: 60px 45px;
+    border-radius: 18px;
+    margin-bottom: 25px;
+    border: 1px solid #334155;
+    min-height: 200px;
+}
+
+.hero-title {
+    color: #F8FAFC;
+    font-size: 38px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hero-subtitle {
+    color: #CBD5E1;
+    font-size: 15px;
+    font-weight: 400;
+    max-width: 850px;
+    line-height: 1.6;
+    opacity: 0.9;
+}
