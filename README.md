@@ -44,8 +44,5 @@ The dashboard provides actionable insights into:
 *   **Surgical Pricing:** Replacing broad discounts with data-driven, margin-focused pricing.
 *   **Retention Programs:** Implementing tiered outreach for top-tier "Whale" customers.
 
-### 📄 License
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
-
 ***
 **Developed by:** Debayan Mal | Unified Mentor Intern | May 2026
