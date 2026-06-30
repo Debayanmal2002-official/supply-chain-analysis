@@ -5,6 +5,8 @@ import plotly.express as px
 from pathlib import Path
 from src.ui_components import kpi_card, apply_custom_css
 from plotly.subplots import make_subplots
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 import plotly.graph_objects as go
 import urllib.request
 import json
@@ -425,109 +427,109 @@ with tab2:
 with tab3:
     st.subheader("Customer Value Dashboard")
 
-    # 1. Aggregate and Segment Customers
+    # 0. Toggle between Hard Logic and ML
+    analysis_type = st.radio(
+        "Analysis Methodology:",
+        ["Hard Logic (Rule-Based)", "ML-Powered (K-Means Clustering)"],
+        horizontal=True,
+        key="analysis_method_selector"
+    )
+
+    # 1. Aggregate Customer Data (Shared step)
     cust_performance = filtered_df.groupby('Customer Id').agg({
         'Sales': 'sum',
         'Order Profit Per Order': 'sum',
         'Order Item Quantity': 'sum'
     }).reset_index()
 
-    q_sales = cust_performance['Sales'].quantile(0.8)
+    # 2. APPLY SEGMENTATION LOGIC
+    if analysis_type == "Hard Logic (Rule-Based)":
+        q_sales = cust_performance['Sales'].quantile(0.8)
 
-    def segment_customer(row):
-        if row['Sales'] >= q_sales and row['Order Profit Per Order'] > 0:
-            return "High-Value (Whales)"
-        elif row['Order Profit Per Order'] <= 0:
-            return "Loss-Making (Maintenance Drain)"
-        else:
-            return "Standard Growth"
 
-    cust_performance['Segment'] = cust_performance.apply(segment_customer, axis=1)
+        def segment_customer(row):
+            if row['Sales'] >= q_sales and row['Order Profit Per Order'] > 0:
+                return "High-Value (Whales)"
+            elif row['Order Profit Per Order'] <= 0:
+                return "Loss-Making (Maintenance Drain)"
+            else:
+                return "Standard Growth"
 
-    # 2. Toggle View
+
+        cust_performance['Segment'] = cust_performance.apply(segment_customer, axis=1)
+        title_suffix = "(Rule-Based)"
+
+    else:  # ML-Powered Logic
+        # Feature Engineering
+        cust_performance['Is_Profitable'] = (cust_performance['Order Profit Per Order'] > 0).astype(int)
+        scaler = StandardScaler()
+        features = ['Sales', 'Order Profit Per Order', 'Order Item Quantity', 'Is_Profitable']
+        scaled_data = scaler.fit_transform(cust_performance[features])
+
+        # Clustering
+        kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
+        cust_performance['Cluster_ID'] = kmeans.fit_predict(scaled_data)
+
+
+        # Mapping
+        def get_segment_name(row):
+            if row['Order Profit Per Order'] <= 0:
+                return "Loss-Making (Maintenance Drain)"
+            elif row['Sales'] > cust_performance['Sales'].median():
+                return "High-Value (Whales)"
+            else:
+                return "Standard Growth"
+
+
+        cust_performance['Segment'] = cust_performance.apply(get_segment_name, axis=1)
+        title_suffix = "(ML-Powered)"
+
+    # 3. View Mode Toggle
     view_mode = st.radio(
         "Choose Visualization View:",
         ["Executive Summary (Segmented)", "Granular Analysis (All Customers)"],
-        horizontal=True
+        horizontal=True,
+        key="view_mode_selector"
     )
 
-    # 3. Logic for the selected view
+    # 4. Preparing data for plotting
     if view_mode == "Executive Summary (Segmented)":
         data_to_plot = cust_performance.groupby('Segment').agg({
             'Sales': 'sum', 'Order Profit Per Order': 'sum', 'Customer Id': 'count'
         }).reset_index()
         size_col = 'Customer Id'
-        title = "Executive View: Performance by Customer Segment"
     else:
         data_to_plot = cust_performance
         size_col = 'Order Item Quantity'
-        title = "Granular View: All 20,000 Customers"
 
-    # 4. Shared Plotting Logic
+    # 5. Plotting
     fig_cust = px.scatter(
         data_to_plot,
         x="Sales",
         y="Order Profit Per Order",
         size=size_col,
         color="Segment",
-        size_max=80 if view_mode == "Executive Summary (Segmented)" else 20,
+        size_max=70 if view_mode == "Executive Summary (Segmented)" else 15,
         color_discrete_map={
             "High-Value (Whales)": "#22c55e",
             "Standard Growth": "#3b82f6",
             "Loss-Making (Maintenance Drain)": "#ef4444"
         },
-        title=title,
-        template="plotly_dark",
-        hover_name="Customer Id" if view_mode != "Executive Summary (Segmented)" else None
+        title=f"Customer Performance {title_suffix}",
+        template="plotly_dark"
     )
 
-    fig_cust.update_layout(
-        plot_bgcolor="#0F172A",
-        paper_bgcolor="#0F172A",
-        font_color="#F8FAFC",
-        xaxis_title="Total Sales ($)",
-        yaxis_title="Total Profit ($)",
-        margin=dict(t=50, l=10, r=10, b=10)
-    )
-
+    fig_cust.update_layout(plot_bgcolor="#0F172A", paper_bgcolor="#0F172A", font_color="#F8FAFC")
     st.plotly_chart(fig_cust, width='stretch')
 
-    # 5. Detailed Customer Action List with Segment Filtering
+    # 6. Detailed Action List
     st.markdown("---")
     st.subheader("Detailed Customer Action List")
+    all_segs = sorted(cust_performance['Segment'].unique())
+    selected_segments = st.multiselect("Filter by Segment:", options=all_segs, default=all_segs, key="seg_filter_final")
 
-    # Multiselect for segment filtering
-    all_segments = cust_performance['Segment'].unique()
-    selected_segments_1 = st.multiselect(
-        "Filter by Customer Segment:",
-        options=all_segments,
-        default=all_segments
-    )
-
-    # Filter the dataframe based on selection
-    filtered_list = cust_performance[cust_performance['Segment'].isin(selected_segments_1)]
-
-    # Display the filtered dataframe
-    st.dataframe(
-        filtered_list.sort_values(by='Sales', ascending=False),
-        width='stretch',
-        hide_index=True
-    )
-
-    # --- Dynamic Strategic Narrative ---
-    # We define helper labels to ensure the sentence flows naturally
-    market_label = ", ".join(selected_markets).upper() if selected_markets else "GLOBAL"
-    region_label = ", ".join(selected_regions).upper() if selected_regions else "ALL"
-    segment_label = ", ".join(selected_segments).upper() if selected_segments else "ALL"
-
-    strategic_summary = (
-        f"In **{market_label}** market region, **{region_label}** order region in **{segment_label}** "
-        f"customer segment, these are the **{selected_segments_1}** customers."
-        "Specific targeted ads and outreach to standard growth customers, combined with "
-        "continuous retention of high value customers, will ensure the growth of the company."
-    )
-
-    st.markdown(f"> {strategic_summary}")
+    filtered_list = cust_performance[cust_performance['Segment'].isin(selected_segments)]
+    st.dataframe(filtered_list.sort_values(by='Sales', ascending=False), width='stretch', hide_index=True)
 
 with tab4:
     st.subheader("Discount Impact Diagnostics")
