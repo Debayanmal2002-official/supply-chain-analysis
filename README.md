@@ -5,6 +5,11 @@
 ## 📝 Overview
 This repository hosts the documentation and analytical framework for optimizing supply chain profitability. The project shifts the analytical focus from superficial volume metrics to granular profitability diagnostics, empowering leadership with a high-performance, interactive dashboard.
 
+---
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg?v=1)](https://supply-chain-analysis-b36yrboe8gzckscguwqn2k.streamlit.app/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20461917.svg)](https://doi.org/10.5281/zenodo.20461917)
+---
+
 ## 🚀 Key Features
 * **High-Performance Data Pipeline:** Leverages **Apache Parquet** columnar storage to process 280k+ records with sub-second latency.
 * **Interactive Dashboard:** Built with **Streamlit** to facilitate real-time "what-if" scenario modeling.
