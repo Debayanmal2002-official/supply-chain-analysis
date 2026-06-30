@@ -2,14 +2,17 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
+import urllib.request
+import json
 from pathlib import Path
 from src.ui_components import kpi_card, apply_custom_css
 from plotly.subplots import make_subplots
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
-import plotly.graph_objects as go
-import urllib.request
-import json
+from sklearn.ensemble import RandomForestRegressor
+
+
 
 # LOADING DATA
 @st.cache_data
@@ -650,41 +653,78 @@ with tab4:
 
     st.markdown("---")
 
-    st.subheader("Discount Impact Simulator")
+    st.subheader("Discount Impact Simulator (ML-Powered)")
 
-    # 1. Slider for Simulation
-    col_sim1, col_sim2 = st.columns([1, 2])
-    with col_sim1:
-        sim_discount = st.slider(
-            "Hypothetical Discount Rate (%)",
-            min_value=0.0, max_value=50.0, value=10.0, step=1.0
-        ) / 100
+    # 1. Feature Selection & Preprocessing
+    cat_features = ['Shipping Mode', 'Payment Type']
+    num_features = ['Order Item Discount Rate', 'Order Item Product Price']
+    features = num_features + cat_features
 
-    # 2. Logic: Recalculate profit based on a change in discount
-    current_profit = filtered_df['Order Profit Per Order'].sum()
-    sales_base = filtered_df['Sales'].sum()
+    # Convert text categories to dummy/one-hot variables
+    X = pd.get_dummies(filtered_df[features], columns=cat_features)
+    y = filtered_df['Order Item Quantity']
 
-    # Let's say the current average discount is 0.10 (10%)
-    # The user is proposing a change to sim_discount
-    avg_current_discount = filtered_df['Order Item Discount Rate'].mean()
-    discount_delta = sim_discount - avg_current_discount
+    # 2. Train the Model
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X, y)
 
-    estimated_profit_change = -(sales_base * discount_delta)
-    projected_profit = current_profit + estimated_profit_change
+    # 3. Simulator UI
+    sim_discount = st.slider(
+        "Hypothetical Discount Rate (%)",
+        min_value=0.0, max_value=50.0, value=10.0, step=0.1,
+        key="sim_discount_rf"
+    ) / 100
 
-    # 3. Display Results
-    with col_sim2:
-        col_a, col_b = st.columns(2)
+    # 4. Predict
+    X_sim = X.copy()
+    X_sim['Order Item Discount Rate'] = sim_discount
+    predicted_volume = model.predict(X_sim).sum()
 
-        col_b.metric(
-            "Projected Profit",
-            f"${projected_profit:,.0f}",
-            delta=f"${estimated_profit_change:,.0f}"
-        )
+    # 5. Metrics Calculation
+    avg_price = filtered_df['Sales'].sum() / filtered_df['Order Item Quantity'].sum()
+    projected_sales = predicted_volume * (avg_price * (1 - sim_discount))
+    # Assume simple margin calculation for simulation
+    projected_profit = projected_sales * 0.2
 
-    st.caption(
-        "💡 **Note:** This simulation assumes constant sales volume. Real-world results may vary if discounts drive additional volume.")
-    st.divider()
+    historical_revenue = filtered_df['Sales'].sum()
+    revenue_delta = projected_sales - historical_revenue
+
+    col1, col2 = st.columns(2)
+    col1.metric(
+        "Predicted Total Volume",
+        f"{predicted_volume:,.0f} units"
+    )
+
+    col2.metric(
+        label="Projected Revenue",
+        value=f"${projected_sales:,.0f}",
+        delta=f"{revenue_delta:,.0f}",
+        delta_color="normal"  
+    )
+
+    # 6. Feature Importance
+    st.write("---")
+    st.subheader("What drives demand for this region?")
+    importance = pd.DataFrame({
+        'Feature': X.columns,
+        'Importance': model.feature_importances_
+    }).sort_values(by='Importance', ascending=False).head(5)
+
+    fig_importance = px.bar(
+        importance,
+        x='Importance',
+        y='Feature',
+        orientation='h',
+        title="Key Demand Drivers",
+        template="plotly_dark"
+    )
+    fig_importance.update_layout(
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font_color="#F8FAFC"
+    )
+
+    st.plotly_chart(fig_importance, width='stretch')
 
 with tab5:
     st.subheader("Global Profitability Heatmap")
