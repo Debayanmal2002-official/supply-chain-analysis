@@ -652,7 +652,7 @@ with tab4:
 
     st.markdown("---")
 
-    st.subheader("Discount Impact Simulator (ML-Powered)")
+    st.subheader("Discount Impact Simulator (Random Forest Model)")
 
     # 1. Feature Selection & Preprocessing
     cat_features = ['Shipping Mode', 'Payment Type']
