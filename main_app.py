@@ -536,8 +536,6 @@ with tab3:
 
 with tab4:
     st.subheader("Discount Impact Diagnostics")
-    st.caption(
-        "💡 **Tip:** Avoid excessive filtering. This diagnostic is most accurate at higher aggregation levels; too much drill-down will introduce statistical noise.")
 
     # 1. Calculate Volume-Weighted Profit Ratio
     discount_analysis = filtered_df.groupby('Order Item Discount Rate').agg({
@@ -626,6 +624,7 @@ with tab4:
 
     st.markdown("---")
     st.subheader("Profitability Impact Summary")
+    st.caption("💡 **Tip:** Use side bar drill down filter here for more accurate market and customer specific predictions.")
 
     # Calculate Theoretical Revenue (Price without discount)
     # Price = Sales / (1 - Discount_Rate)
