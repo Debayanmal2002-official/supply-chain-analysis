@@ -7,7 +7,7 @@ This repository hosts the documentation and analytical framework for optimizing 
 
 ---
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg?v=1)](https://supply-chain-analysis-b36yrboe8gzckscguwqn2k.streamlit.app/)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20461917.svg)](https://doi.org/10.5281/zenodo.20461917)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21075750.svg)](https://doi.org/10.5281/zenodo.21075750)
 ---
 
 ## 🚀 Key Features
