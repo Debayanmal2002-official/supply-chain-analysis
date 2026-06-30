@@ -91,7 +91,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📦 Product & Category Performance",
     "👥 Customer Value Dashboard",
     "💸 Discount Impact Analyzer",
-    "🌏 Global Market Benchmark (Unfiltered)"
+    "🌏 Global Market Benchmark"
 ])
 
 # TAB 1: REVENUE & PROFIT OVERVIEW
